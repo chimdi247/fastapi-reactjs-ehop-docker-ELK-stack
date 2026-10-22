@@ -208,7 +208,7 @@ services:
       - "4317:4317"   # OTLP gRPC
       - "4318:4318"   # OTLP HTTP
     depends_on:
-      mimir:    { condition: service_healthy }
+      mimir:    { condition: service_started }
       logstash: { condition: service_started }
     networks: [shopease]
     logging: *default-logging
@@ -232,19 +232,14 @@ services:
     networks: [shopease]
     logging: *default-logging
     mem_limit: 1g
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9009/ready | grep -q ready"]
-      interval: 10s
-      timeout: 5s
-      retries: 18
-      start_period: 20s
+    healthcheck: { disable: true }
 
   grafana:
     image: grafana/grafana:11.3.0
     container_name: grafana
     restart: unless-stopped
     depends_on:
-      mimir:   { condition: service_healthy }
+      mimir:   { condition: service_started }
       mailpit: { condition: service_started }
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
