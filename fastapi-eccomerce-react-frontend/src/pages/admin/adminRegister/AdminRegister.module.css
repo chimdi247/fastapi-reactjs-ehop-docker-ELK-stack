@@ -1,0 +1,194 @@
+.adminRegisterContainer {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+}
+
+.adminRegisterCard {
+    background: white;
+    border-radius: 16px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 550px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    animation: slideUp 0.5s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.adminHeader {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.adminHeader h1 {
+    font-size: 2rem;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.adminHeader p {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.errorAlert {
+    background: #fee;
+    border-left: 4px solid #e74c3c;
+    padding: 0.75rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.successAlert {
+    background: #e8f5e9;
+    border-left: 4px solid #27ae60;
+    padding: 0.75rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.errorAlert span,
+.successAlert span {
+    font-size: 1.2rem;
+}
+
+.errorAlert p {
+    color: #c00;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.successAlert p {
+    color: #27ae60;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.adminForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.formGroup label {
+    font-weight: 500;
+    color: #2c3e50;
+    font-size: 0.9rem;
+}
+
+.formGroup input,
+.formGroup select {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.formGroup input:focus,
+.formGroup select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+.formGroup input:disabled,
+.formGroup select:disabled {
+    background: #f5f5f5;
+    cursor: not-allowed;
+}
+
+.adminRegisterBtn {
+    padding: 0.875rem;
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+}
+
+.adminRegisterBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(44, 62, 80, 0.4);
+}
+
+.adminRegisterBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.adminInfo {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #eee;
+}
+
+.adminInfo h3 {
+    font-size: 1rem;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+}
+
+.adminInfo ul {
+    list-style: none;
+    padding: 0;
+}
+
+.adminInfo ul li {
+    padding: 0.5rem 0;
+    color: #666;
+    font-size: 0.85rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.adminInfo ul li:last-child {
+    border-bottom: none;
+}
+
+.adminInfo ul li strong {
+    color: #2c3e50;
+}
+
+@media (max-width: 768px) {
+    .adminRegisterContainer {
+        padding: 1rem;
+    }
+
+    .adminRegisterCard {
+        padding: 1.5rem;
+    }
+
+    .adminHeader h1 {
+        font-size: 1.5rem;
+    }
+}

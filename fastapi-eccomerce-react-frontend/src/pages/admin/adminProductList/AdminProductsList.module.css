@@ -1,0 +1,354 @@
+.adminProductsContainer {
+    padding: 2rem 0;
+    min-height: calc(100vh - 200px);
+    background: #f8f9fa;
+}
+
+.adminHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.adminHeader h1 {
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.adminHeader p {
+    color: #666;
+}
+
+.addProductBtn {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.addProductBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+}
+
+.searchBar {
+    margin-bottom: 1.5rem;
+}
+
+.searchInput {
+    width: 100%;
+    max-width: 400px;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.searchInput:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+.productsTableWrapper {
+    background: white;
+    border-radius: 12px;
+    overflow-x: auto;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.productsTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.productsTable th,
+.productsTable td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.productsTable th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.productsTable tr:hover {
+    background: #fafafa;
+}
+
+.productImageCell {
+    width: 60px;
+}
+
+.productThumb {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.productNameCell {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.stockBadge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.stockBadge.inStock {
+    background: #d4edda;
+    color: #155724;
+}
+
+.stockBadge.lowStock {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.actionsCell {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.editBtn,
+.deleteBtn {
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+}
+
+.editBtn {
+    background: #3498db;
+    color: white;
+}
+
+.editBtn:hover {
+    background: #2980b9;
+}
+
+.deleteBtn {
+    background: #e74c3c;
+    color: white;
+}
+
+.deleteBtn:hover {
+    background: #c0392b;
+}
+
+.emptyRow {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+}
+
+.statsFooter {
+    margin-top: 1.5rem;
+    text-align: right;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Modal Styles */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modalContent {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    animation: slideUp 0.3s ease;
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.modalHeader h2 {
+    margin: 0;
+    color: #2c3e50;
+}
+
+.closeBtn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+}
+
+.modalBody {
+    padding: 1.5rem;
+}
+
+.warningText {
+    color: #e74c3c;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+
+.modalFooter {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding: 1.5rem;
+    border-top: 1px solid #e0e0e0;
+}
+
+.confirmDeleteBtn {
+    padding: 0.5rem 1rem;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.cancelBtn {
+    padding: 0.5rem 1rem;
+    background: #95a5a6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.cancelBtn:hover {
+    background: #7f8c8d;
+}
+
+/* Loading & Error States */
+.loadingState {
+    text-align: center;
+    padding: 4rem;
+    background: white;
+    border-radius: 12px;
+}
+
+.loadingSpinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+.errorAlert {
+    background: #fee;
+    border-left: 4px solid #e74c3c;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.toastNotification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #27ae60;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+}
+
+.toastNotification.error {
+    background: #e74c3c;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .adminHeader {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .productsTable th,
+    .productsTable td {
+        padding: 0.75rem;
+    }
+
+    .actionsCell {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .editBtn,
+    .deleteBtn {
+        text-align: center;
+    }
+}

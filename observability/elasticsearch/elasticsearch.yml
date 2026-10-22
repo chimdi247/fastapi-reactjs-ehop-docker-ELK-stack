@@ -1,0 +1,22 @@
+# Mounted at /usr/share/elasticsearch/config/elasticsearch.yml
+cluster.name: shopease-logs
+node.name: es01
+network.host: 0.0.0.0
+discovery.type: single-node
+
+# DEV ONLY: security is off so Kibana/Logstash need no credentials. Ports are bound to 127.0.0.1
+# in docker-compose.yml. For anything shared/production enable xpack.security + TLS.
+xpack.security.enabled: false
+xpack.ml.enabled: false
+xpack.watcher.enabled: false
+
+# On a nearly-full laptop disk ES would flip indices to read-only; keep dev usable.
+cluster.routing.allocation.disk.threshold_enabled: false
+
+# ---- S3 repository client (used by the snapshot repo registered in setup.sh) ----
+# Access/secret keys are NOT here: they are written to the Elasticsearch keystore at container start.
+# ${...} come from the container environment.
+s3.client.default.endpoint: ${S3_ENDPOINT}
+s3.client.default.protocol: ${S3_PROTOCOL}
+s3.client.default.region: ${S3_REGION}
+s3.client.default.path_style_access: ${S3_PATH_STYLE}

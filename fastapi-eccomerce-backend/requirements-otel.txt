@@ -1,0 +1,8 @@
+# OpenTelemetry — kept OUT of pyproject.toml/uv.lock on purpose, so the application's own
+# dependency set (locked) is untouched. Installed as a separate layer in the Dockerfile.
+#
+# SDK 1.43.0 pairs with the contrib/instrumentation 0.64b0 line (same release train).
+opentelemetry-api==1.43.0
+opentelemetry-sdk==1.43.0
+opentelemetry-exporter-otlp-proto-http==1.43.0   # OTLP over HTTP -> collector :4318 (no gRPC/grpcio build needed)
+opentelemetry-distro==0.64b0                     # `opentelemetry-instrument` launcher + sane defaults

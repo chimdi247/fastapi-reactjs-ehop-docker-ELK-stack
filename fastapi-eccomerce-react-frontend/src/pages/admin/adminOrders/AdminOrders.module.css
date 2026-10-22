@@ -1,0 +1,269 @@
+.adminOrdersContainer {
+    padding: 2rem 0;
+    min-height: calc(100vh - 200px);
+    background: #f8f9fa;
+}
+
+.pageHeader {
+    margin-bottom: 2rem;
+}
+
+.pageHeader h1 {
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.pageHeader p {
+    color: #666;
+}
+
+.filterSection {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.filterBtn {
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filterBtn:hover {
+    background: #f0f0f0;
+}
+
+.filterBtn.active {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.ordersTableWrapper {
+    background: white;
+    border-radius: 12px;
+    overflow-x: auto;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.ordersTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ordersTable th,
+.ordersTable td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.ordersTable th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.ordersTable tr:hover {
+    background: #fafafa;
+}
+
+.addressCell {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.statusBadge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.statusPending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.statusProcessing {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.statusShipped {
+    background: #d4edda;
+    color: #155724;
+}
+
+.statusDelivered {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.statusCancelled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.actionsCell {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.actionBtn {
+    padding: 0.25rem 0.75rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.actionBtn.processing {
+    background: #17a2b8;
+    color: white;
+}
+
+.actionBtn.processing:hover {
+    background: #138496;
+}
+
+.actionBtn.shipped {
+    background: #28a745;
+    color: white;
+}
+
+.actionBtn.shipped:hover {
+    background: #218838;
+}
+
+.actionBtn.delivered {
+    background: #007bff;
+    color: white;
+}
+
+.actionBtn.delivered:hover {
+    background: #0056b3;
+}
+
+.actionBtn.cancelled {
+    background: #dc3545;
+    color: white;
+}
+
+.actionBtn.cancelled:hover {
+    background: #c82333;
+}
+
+.actionBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.emptyRow {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+}
+
+.loadingState {
+    text-align: center;
+    padding: 4rem;
+    background: white;
+    border-radius: 12px;
+}
+
+.loadingSpinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+.errorAlert {
+    background: #fee;
+    border-left: 4px solid #e74c3c;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.toastNotification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #27ae60;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+}
+
+.toastNotification.error {
+    background: #e74c3c;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .adminOrdersContainer {
+        padding: 1rem;
+    }
+
+    .filterSection {
+        flex-direction: column;
+    }
+
+    .filterBtn {
+        width: 100%;
+    }
+
+    .ordersTable th,
+    .ordersTable td {
+        padding: 0.75rem;
+    }
+
+    .actionsCell {
+        flex-direction: column;
+    }
+
+    .actionBtn {
+        width: 100%;
+        text-align: center;
+    }
+}

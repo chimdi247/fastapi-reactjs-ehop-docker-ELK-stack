@@ -1,0 +1,151 @@
+# =====================================================================
+# OpenTelemetry Collector (contrib distribution)
+#
+#   metrics : app OTLP + scraped exporters  ──► Grafana Mimir (Prometheus remote-write) ──► S3
+#   logs    : app OTLP (structured)         ──► Logstash ──► Elasticsearch ──► Kibana  (+ S3 archive)
+#   traces  : app OTLP                      ──► nop  (add Tempo/Jaeger/ES here when you want traces)
+# =====================================================================
+receivers:
+  otlp:
+    protocols:
+      grpc: { endpoint: 0.0.0.0:4317 }
+      http: { endpoint: 0.0.0.0:4318 }
+
+  # Infrastructure exporters are scraped here, so there is no separate Prometheus server:
+  # Collector -> remote-write -> Mimir is the single metrics path.
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: cadvisor            # per-container CPU / memory / network / disk
+          scrape_interval: 15s
+          static_configs: [{ targets: ["cadvisor:8080"] }]
+        - job_name: node-exporter       # host (node) CPU / memory / disk / network
+          scrape_interval: 15s
+          static_configs: [{ targets: ["node-exporter:9100"] }]
+        - job_name: postgres
+          scrape_interval: 30s
+          static_configs: [{ targets: ["postgres-exporter:9187"] }]
+        - job_name: minio
+          metrics_path: /minio/v2/metrics/cluster
+          scrape_interval: 30s
+          static_configs: [{ targets: ["minio:9000"] }]
+        - job_name: mimir
+          scrape_interval: 30s
+          static_configs: [{ targets: ["mimir:9009"] }]
+        - job_name: otel-collector
+          scrape_interval: 30s
+          static_configs: [{ targets: ["otel-collector:8888"] }]
+        - job_name: blackbox-http       # uptime / availability / external latency per service
+          metrics_path: /probe
+          params: { module: [http_2xx] }
+          scrape_interval: 15s
+          static_configs:
+            - targets: ["http://ecommerce-api:8084/api/health"]
+              labels: { service: ecommerce-api }
+            - targets: ["http://ecommerce-frontend:80/healthz"]
+              labels: { service: ecommerce-frontend }
+            - targets: ["http://mimir:9009/ready"]
+              labels: { service: mimir }
+            - targets: ["http://elasticsearch:9200/_cluster/health"]
+              labels: { service: elasticsearch }
+            - targets: ["http://kibana:5601/api/status"]
+              labels: { service: kibana }
+            - targets: ["http://logstash:9600/"]
+              labels: { service: logstash }
+            - targets: ["http://minio:9000/minio/health/live"]
+              labels: { service: minio }
+            - targets: ["http://grafana:3000/api/health"]
+              labels: { service: grafana }
+          relabel_configs:
+            - source_labels: [__address__]
+              target_label: __param_target
+            - source_labels: [__param_target]
+              target_label: instance
+            - target_label: __address__
+              replacement: blackbox-exporter:9115
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+
+  # App telemetry only: drop per-process / per-restart resource attributes so Mimir label sets stay
+  # stable (service_name, service_namespace, deployment_environment remain).
+  resource/clean:
+    attributes:
+      - { key: process.pid,               action: delete }
+      - { key: process.command,           action: delete }
+      - { key: process.command_args,      action: delete }
+      - { key: process.executable.path,   action: delete }
+      - { key: process.owner,             action: delete }
+      - { key: process.runtime.description, action: delete }
+      - { key: host.name,                 action: delete }
+      - { key: host.arch,                 action: delete }
+      - { key: os.description,            action: delete }
+      - { key: telemetry.auto.version,    action: delete }
+
+  batch:
+    send_batch_size: 2048
+    timeout: 5s
+
+exporters:
+  prometheusremotewrite:
+    endpoint: http://mimir:9009/api/v1/push
+    resource_to_telemetry_conversion:
+      enabled: true                  # service.name -> service_name, deployment.environment -> deployment_environment
+    remote_write_queue:
+      enabled: true
+      queue_size: 10000
+      num_consumers: 4
+    retry_on_failure:
+      enabled: true
+      initial_interval: 1s
+      max_interval: 30s
+      max_elapsed_time: 5m
+    # headers: { X-Scope-OrgID: shopease }   # only needed if Mimir multitenancy is turned on
+
+  # Logs -> Logstash HTTP input, as OTLP/JSON (parsed by observability/logstash/pipeline/*)
+  otlphttp/logstash:
+    logs_endpoint: http://logstash:8080/v1/logs
+    encoding: json
+    compression: none
+    tls: { insecure: true }
+    retry_on_failure:
+      enabled: true
+      initial_interval: 2s
+      max_interval: 30s
+      max_elapsed_time: 10m
+    sending_queue:
+      enabled: true
+      queue_size: 5000
+
+  nop: {}
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  telemetry:
+    logs: { level: warn }
+    metrics:
+      address: 0.0.0.0:8888
+  pipelines:
+    metrics/app:
+      receivers:  [otlp]
+      processors: [memory_limiter, resource/clean, batch]
+      exporters:  [prometheusremotewrite]
+    metrics/infra:
+      receivers:  [prometheus]
+      processors: [memory_limiter, batch]
+      exporters:  [prometheusremotewrite]
+    logs:
+      receivers:  [otlp]
+      processors: [memory_limiter, resource/clean, batch]
+      exporters:  [otlphttp/logstash]
+    traces:
+      receivers:  [otlp]
+      processors: [memory_limiter, batch]
+      exporters:  [nop]

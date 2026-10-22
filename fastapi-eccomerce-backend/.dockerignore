@@ -1,0 +1,36 @@
+# secrets & local state — NEVER bake these into an image
+.env
+.env.*
+!.env.example
+*.db
+*.sqlite3
+
+# python
+.venv
+venv
+env
+ENV
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.pytest_cache
+.coverage
+htmlcov
+.mypy_cache
+.ruff_cache
+
+# local uploads (production uses S3/MinIO)
+uploads
+
+# tooling
+.git
+.github
+.vscode
+.idea
+*.swp
+.DS_Store
+Dockerfile
+docker-compose.yml
+compose.yaml
+.dockerignore

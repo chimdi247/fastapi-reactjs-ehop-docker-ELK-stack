@@ -1,0 +1,2 @@
+- pipeline.id: otel-logs
+  path.config: "/usr/share/logstash/pipeline/otel-logs.conf"

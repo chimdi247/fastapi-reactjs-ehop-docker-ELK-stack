@@ -1,0 +1,17 @@
+apiVersion: 1
+
+datasources:
+  # Grafana Mimir exposes the Prometheus HTTP API under /prometheus
+  - name: Mimir
+    uid: mimir
+    type: prometheus
+    access: proxy
+    url: http://mimir:9009/prometheus
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: POST
+      timeInterval: 15s
+      prometheusType: Mimir
+      prometheusVersion: 2.9.1
+      # single-tenant Mimir (multitenancy_enabled: false) => no X-Scope-OrgID header required

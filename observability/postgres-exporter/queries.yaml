@@ -1,0 +1,29 @@
+# Business KPIs computed straight from the database (source of truth — they survive API restarts).
+# Exposed by postgres-exporter as pg_<query>_<column>, e.g. pg_shopease_orders_count{status="PENDING"}.
+shopease_orders:
+  query: "SELECT status::text AS status, COUNT(*)::float AS count, COALESCE(SUM(total_price),0)::float AS value FROM orders GROUP BY status"
+  metrics:
+    - status: { usage: "LABEL",  description: "Order status" }
+    - count:  { usage: "GAUGE",  description: "Orders per status" }
+    - value:  { usage: "GAUGE",  description: "Total value of orders per status" }
+
+shopease_users:
+  query: "SELECT role::text AS role, COUNT(*)::float AS count FROM users WHERE active GROUP BY role"
+  metrics:
+    - role:  { usage: "LABEL", description: "User role" }
+    - count: { usage: "GAUGE", description: "Active users per role" }
+
+shopease_catalog:
+  query: "SELECT COUNT(*)::float AS products, COUNT(*) FILTER (WHERE stock_quantity = 0)::float AS out_of_stock, COUNT(*) FILTER (WHERE stock_quantity BETWEEN 1 AND 10)::float AS low_stock, COALESCE(SUM(stock_quantity),0)::float AS units_in_stock FROM products"
+  metrics:
+    - products:       { usage: "GAUGE", description: "Products in the catalogue" }
+    - out_of_stock:   { usage: "GAUGE", description: "Products with zero stock" }
+    - low_stock:      { usage: "GAUGE", description: "Products with 1-10 units left" }
+    - units_in_stock: { usage: "GAUGE", description: "Total units in stock" }
+
+shopease_payments:
+  query: "SELECT COALESCE(SUM(amount) FILTER (WHERE status = 'COMPLETED'),0)::float AS completed_total, COUNT(*) FILTER (WHERE status = 'COMPLETED')::float AS completed, COUNT(*) FILTER (WHERE status = 'FAILED')::float AS failed FROM payments"
+  metrics:
+    - completed_total: { usage: "GAUGE", description: "Revenue from completed payments" }
+    - completed:       { usage: "GAUGE", description: "Completed payments" }
+    - failed:          { usage: "GAUGE", description: "Failed payments" }

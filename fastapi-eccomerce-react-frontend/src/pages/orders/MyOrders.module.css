@@ -1,0 +1,621 @@
+.ordersContainer {
+    padding: 2rem 0;
+    min-height: calc(100vh - 200px);
+    background: #f8f9fa;
+}
+
+.ordersHeader {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.ordersHeader h1 {
+    font-size: 2rem;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.ordersHeader p {
+    color: #666;
+    font-size: 1rem;
+}
+
+/* Orders List */
+.ordersList {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.orderCard {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.orderCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+.orderHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.orderInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.orderNumber {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #2c3e50;
+}
+
+.orderDate {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.orderStatus {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+.statusIcon {
+    font-size: 1rem;
+}
+
+.statusPending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.statusProcessing {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.statusShipped {
+    background: #d4edda;
+    color: #155724;
+}
+
+.statusDelivered {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.statusCancelled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.orderDetails {
+    padding: 1.5rem;
+}
+
+.orderSummary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.summaryItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.summaryItem .label {
+    font-weight: 500;
+    color: #666;
+}
+
+.summaryItem .value {
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+/* Order Items */
+.orderItems {
+    margin-bottom: 1.5rem;
+}
+
+.orderItems h3 {
+    font-size: 1.1rem;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+}
+
+.itemsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.orderItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.itemInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.itemName {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.itemDetails {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: #666;
+    flex-wrap: wrap;
+}
+
+.itemAction {
+    display: flex;
+    align-items: center;
+}
+
+.reviewedBadge {
+    background: #d4edda;
+    color: #155724;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.writeReviewBtn {
+    padding: 0.4rem 0.875rem;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.writeReviewBtn:hover {
+    background: #229954;
+    transform: translateY(-2px);
+}
+
+/* Progress Tracker */
+.orderProgress {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.progressTracker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
+
+.progressStep {
+    flex: 1;
+    text-align: center;
+    position: relative;
+}
+
+.stepIndicator {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.stepCircle {
+    width: 40px;
+    height: 40px;
+    background: #e0e0e0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    z-index: 2;
+    position: relative;
+}
+
+.stepLine {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 3px;
+    background: #e0e0e0;
+    z-index: 1;
+}
+
+.progressStep:last-child .stepLine {
+    display: none;
+}
+
+/* Completed Steps */
+.progressStep.completed .stepCircle {
+    background: #27ae60;
+    color: white;
+}
+
+.progressStep.completed .stepLine.completedLine {
+    background: #27ae60;
+}
+
+/* Active Step */
+.progressStep.active .stepCircle {
+    background: #3498db;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+}
+
+.stepLabel {
+    font-size: 0.8rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.progressStep.completed .stepLabel {
+    color: #27ae60;
+}
+
+.progressStep.active .stepLabel {
+    color: #3498db;
+    font-weight: 600;
+}
+
+/* Pending and Cancelled Messages */
+.pendingMessage,
+.cancelledMessage {
+    text-align: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.pendingMessage p {
+    color: #856404;
+    margin: 0;
+}
+
+.cancelledMessage p {
+    color: #721c24;
+    margin: 0;
+}
+
+/* Modal Styles */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.modalContent {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.modalHeader h2 {
+    margin: 0;
+    color: #2c3e50;
+}
+
+.closeBtn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.3s ease;
+}
+
+.closeBtn:hover {
+    color: #e74c3c;
+}
+
+.modalBody {
+    padding: 1.5rem;
+}
+
+.productInfoModal {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.productInfoModal h3 {
+    color: #2c3e50;
+    margin: 0 0 0.25rem 0;
+}
+
+.orderIdInfo {
+    font-size: 0.85rem;
+    color: #666;
+    margin: 0;
+}
+
+.ratingSelect {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.ratingStar {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+}
+
+.ratingStar.active {
+    opacity: 1;
+}
+
+.ratingStar:hover {
+    opacity: 0.8;
+}
+
+.ratingLabel {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #3498db;
+}
+
+.formGroup {
+    margin-bottom: 1rem;
+}
+
+.formGroup label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.formGroup textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.formGroup textarea:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-top: 1px solid #e0e0e0;
+}
+
+.cancelBtn,
+.submitBtn {
+    padding: 0.5rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.cancelBtn {
+    background: #95a5a6;
+    color: white;
+}
+
+.cancelBtn:hover {
+    background: #7f8c8d;
+}
+
+.submitBtn {
+    background: #27ae60;
+    color: white;
+}
+
+.submitBtn:hover:not(:disabled) {
+    background: #229954;
+    transform: translateY(-2px);
+}
+
+.submitBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Empty State */
+.emptyOrders {
+    text-align: center;
+    padding: 4rem;
+    background: white;
+    border-radius: 12px;
+}
+
+.emptyIcon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.emptyOrders h2 {
+    font-size: 1.5rem;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.emptyOrders p {
+    color: #666;
+    margin-bottom: 2rem;
+}
+
+.shopNowBtn {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    background: #3498db;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.shopNowBtn:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+/* Loading & Error States */
+.loadingState,
+.errorContainer {
+    text-align: center;
+    padding: 4rem;
+    background: white;
+    border-radius: 12px;
+}
+
+.loadingSpinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+.errorMessage {
+    margin-bottom: 1rem;
+}
+
+.retryBtn {
+    padding: 0.75rem 1.5rem;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.retryBtn:hover {
+    background: #2980b9;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .orderHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .orderItem {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .itemAction {
+        width: 100%;
+    }
+
+    .writeReviewBtn {
+        width: 100%;
+    }
+}

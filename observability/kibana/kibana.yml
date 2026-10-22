@@ -1,0 +1,16 @@
+# Mounted at /usr/share/kibana/config/kibana.yml
+server.name: kibana
+server.host: 0.0.0.0
+server.publicBaseUrl: http://localhost:5601
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+
+telemetry.optIn: false
+telemetry.allowChangingOptInStatus: false
+newsfeed.enabled: false
+
+# Needed so saved objects / alerts / reports survive container re-creation (DEV keys — rotate for prod).
+xpack.encryptedSavedObjects.encryptionKey: "shopease-dev-encrypted-saved-objects-key-32chars+"
+xpack.reporting.encryptionKey: "shopease-dev-reporting-encryption-key-32chars+"
+xpack.security.encryptionKey: "shopease-dev-security-session-encryption-key-32+"
+
+logging.root.level: warn

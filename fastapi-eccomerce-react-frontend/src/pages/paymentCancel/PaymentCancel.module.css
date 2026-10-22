@@ -1,0 +1,173 @@
+.paymentContainer {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.cancelCard {
+    background: white;
+    border-radius: 20px;
+    padding: 3rem;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    animation: slideUp 0.5s ease;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.cancelIcon {
+    width: 80px;
+    height: 80px;
+    background: #e74c3c;
+    color: white;
+    font-size: 3rem;
+    font-weight: bold;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    animation: scaleIn 0.5s ease;
+}
+
+.cancelCard h1 {
+    font-size: 2rem;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.cancelCard>p {
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+.orderInfo {
+    background: #fff3cd;
+    border-left: 4px solid #f39c12;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.orderInfo p {
+    color: #856404;
+    margin: 0;
+}
+
+.messageBox {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.messageBox p {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.messageBox ul {
+    list-style: none;
+    padding: 0;
+}
+
+.messageBox ul li {
+    padding: 0.5rem 0;
+    color: #666;
+    font-size: 0.9rem;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.messageBox ul li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.buttonGroup {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.backToCartBtn,
+.continueShoppingBtn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.backToCartBtn {
+    background: #e74c3c;
+    color: white;
+}
+
+.backToCartBtn:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+}
+
+.continueShoppingBtn {
+    background: #2c3e50;
+    color: white;
+}
+
+.continueShoppingBtn:hover {
+    background: #1a252f;
+    transform: translateY(-2px);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .cancelCard {
+        padding: 2rem;
+    }
+
+    .cancelCard h1 {
+        font-size: 1.5rem;
+    }
+
+    .buttonGroup {
+        flex-direction: column;
+    }
+
+    .backToCartBtn,
+    .continueShoppingBtn {
+        width: 100%;
+        text-align: center;
+    }
+}

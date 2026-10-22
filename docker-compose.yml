@@ -1,0 +1,474 @@
+# =====================================================================================
+#  ShopEase — the ENTIRE stack from one file
+#
+#      cp .env.example .env            # (already done once; edit for Stripe/Google/SMTP/AWS)
+#      docker compose up -d --build
+#
+#  Storefront        http://localhost:3000     admin: chimdi247@gmail.com / password123
+#  API (+ /docs)     http://localhost:8084/docs
+#  Grafana           http://localhost:3001     admin / admin        (metrics, SLOs, alerts)
+#  Kibana            http://localhost:5601                          (structured logs)
+#  Mailpit           http://localhost:8025                          (every e-mail the stack sends)
+#  MinIO console     http://localhost:9001     shopease-minio / shopease-minio-secret
+#
+#  Linux hosts: Elasticsearch needs   sudo sysctl -w vm.max_map_count=262144
+#  Give Docker >= 8 GB RAM (Elasticsearch + Logstash + Kibana + Mimir are the heavy ones).
+# =====================================================================================
+name: shopease
+
+# ─────────────────────────────── shared fragments ───────────────────────────────
+x-logging: &default-logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
+# One S3 definition for everything that talks to object storage (MinIO by default, AWS S3 in prod)
+x-s3-env: &s3-env
+  S3_ENDPOINT: ${S3_ENDPOINT:-minio:9000}
+  S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://minio:9000}
+  S3_PROTOCOL: ${S3_PROTOCOL:-http}
+  S3_INSECURE: ${S3_INSECURE:-true}
+  S3_PATH_STYLE: ${S3_PATH_STYLE:-true}
+  S3_REGION: ${S3_REGION:-us-east-1}
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY:-shopease-minio}
+  S3_SECRET_KEY: ${S3_SECRET_KEY:-shopease-minio-secret}
+
+services:
+
+  # ═══════════════════════════════ APPLICATION ═══════════════════════════════
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres                  # bootstrap superuser; the app uses shopease_app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_admin_pw}
+      POSTGRES_DB: shopease
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # first start only: roles -> schema -> admin user -> demo catalogue -> monitoring grants
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    ports: ["5432:5432"]
+    networks: [shopease]
+    logging: *default-logging
+    mem_limit: 512m
+    cpus: 1.0
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shopease"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  ecommerce-api:
+    build:
+      context: ./fastapi-eccomerce-backend
+    image: shopease/api:latest
+    container_name: ecommerce-api
+    restart: unless-stopped
+    depends_on:
+      postgres:        { condition: service_healthy }
+      minio-init:      { condition: service_completed_successfully }
+      otel-collector:  { condition: service_started }
+      mailpit:         { condition: service_started }
+    ports: ["8084:8084"]
+    environment:
+      <<: *s3-env
+      # ---- required application settings (app/core/config.py) ----
+      DATABASE_URL: postgresql+asyncpg://shopease_app:${DB_APP_PASSWORD:-shopease_app_pw}@postgres:5432/shopease
+      SECRETE_JWT_KEY: ${SECRETE_JWT_KEY}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-}
+      MAIL_USER: ${MAIL_USER:-shopease}
+      MAIL_PASS: ${MAIL_PASS:-shopease}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@shopease.com}
+      MAIL_START_TLS: ${MAIL_START_TLS:-true}
+      MAIL_VALIDATE_CERTS: ${MAIL_VALIDATE_CERTS:-true}
+      DELIVERY_PERSON_EMAIL: ${DELIVERY_PERSON_EMAIL:-shimdi247@gmail.com}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8084}
+      RESET_PASSWORD_URL: ${RESET_PASSWORD_URL:-http://localhost:3000/reset-password}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-placeholder.apps.googleusercontent.com}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_AUTH_BASE_URL: ${GOOGLE_AUTH_BASE_URL:-https://accounts.google.com/o/oauth2/v2/auth}
+      GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL:-http://localhost:8084/api/auth/google/callback}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
+      PAYMENT_CONFIRMATION_URL: ${PAYMENT_CONFIRMATION_URL:-http://localhost:3000/payment/success}
+      PAYMENT_CANCEL_URL: ${PAYMENT_CANCEL_URL:-http://localhost:3000/payment/cancel}
+      # ---- object storage for product / avatar images (MinIO by default) ----
+      AWS_ACCESS_KEY: ${S3_ACCESS_KEY:-shopease-minio}
+      AWS_SECRET_KEY: ${S3_SECRET_KEY:-shopease-minio-secret}
+      AWS_BUCKET_NAME: ${UPLOADS_BUCKET:-ecommerce-uploads}
+      AWS_BUCKET_REGION: ${S3_REGION:-us-east-1}
+      # single dash on purpose: an EMPTY value (real AWS S3) must stay empty, not fall back to MinIO
+      AWS_ENDPOINT_URL: ${AWS_ENDPOINT_URL-http://minio:9000}
+      AWS_PUBLIC_BASE_URL: ${AWS_PUBLIC_BASE_URL-http://localhost:9000/ecommerce-uploads}
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-}
+      LOG_LEVEL: INFO
+      DEPLOYMENT_ENVIRONMENT: docker
+      # ---- OpenTelemetry (auto-instrumentation via `opentelemetry-instrument`) ----
+      OTEL_SERVICE_NAME: shopease-api
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=shopease,deployment.environment=docker
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_METRIC_EXPORT_INTERVAL: "10000"
+      OTEL_PROPAGATORS: tracecontext,baggage
+      OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "true"
+      OTEL_PYTHON_LOG_CORRELATION: "true"
+      OTEL_SEMCONV_STABILITY_OPT_IN: http
+      OTEL_PYTHON_EXCLUDED_URLS: api/health,ready,hello
+    networks: [shopease]
+    logging: *default-logging
+    mem_limit: 512m
+    cpus: 1.0
+
+  ecommerce-frontend:
+    build:
+      context: ./fastapi-eccomerce-react-frontend
+      args:
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL-http://localhost:8084}
+    image: shopease/frontend:latest
+    container_name: ecommerce-frontend
+    restart: unless-stopped
+    depends_on:
+      ecommerce-api: { condition: service_started }
+    ports: ["3000:80"]
+    networks: [shopease]
+    logging: *default-logging
+    mem_limit: 128m
+    cpus: 0.5
+
+  # ═══════════════════════════ OBJECT STORAGE (S3) ═══════════════════════════
+
+  minio:
+    image: elestio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-shopease-minio}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-shopease-minio-secret}
+      MINIO_PROMETHEUS_AUTH_TYPE: public          # lets the collector scrape /minio/v2/metrics/cluster
+    volumes: [minio-data:/data]
+    ports:
+      - "9000:9000"   # S3 API  (browsers fetch product images from here)
+      - "9001:9001"   # web console
+    networks: [shopease]
+    logging: *default-logging
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  # one-shot: create the buckets (idempotent)
+  minio-init:
+    image: pgsty/mc:latest
+    container_name: minio-init
+    depends_on:
+      minio: { condition: service_healthy }
+    restart: "no"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-shopease-minio}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-shopease-minio-secret}
+      BUCKETS: "${MIMIR_BLOCKS_BUCKET:-mimir-blocks} ${MIMIR_RULER_BUCKET:-mimir-ruler} ${LOGS_ARCHIVE_BUCKET:-elk-logs-archive} ${ES_SNAPSHOT_BUCKET:-es-snapshots} ${UPLOADS_BUCKET:-ecommerce-uploads}"
+      UPLOADS_BUCKET: ${UPLOADS_BUCKET:-ecommerce-uploads}
+      LOGS_ARCHIVE_BUCKET: ${LOGS_ARCHIVE_BUCKET:-elk-logs-archive}
+      LOGS_ARCHIVE_RETENTION_DAYS: ${LOGS_ARCHIVE_RETENTION_DAYS:-90}
+    volumes:
+      - ./docker/minio/init.sh:/init.sh:ro
+    entrypoint: ["/bin/sh", "/init.sh"]
+    networks: [shopease]
+
+  # one-shot: Mimir runs as uid 10001 and must own its local WAL volume
+  init-permissions:
+    image: busybox:1.36
+    container_name: init-permissions
+    restart: "no"
+    user: "0:0"
+    command: ["sh", "-c", "mkdir -p /mimir && chown -R 10001:10001 /mimir"]
+    volumes: [mimir-data:/mimir]
+    networks: [shopease]
+
+  # ═══════════════════ METRICS:  OTel Collector ─► Mimir (S3) ─► Grafana ═══════════════════
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    container_name: otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./observability/otel/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    depends_on:
+      mimir:    { condition: service_healthy }
+      logstash: { condition: service_started }
+    networks: [shopease]
+    logging: *default-logging
+
+  mimir:
+    image: grafana/mimir:${MIMIR_VERSION:-2.15.0}
+    container_name: mimir
+    restart: unless-stopped
+    command: ["-config.file=/etc/mimir/mimir.yaml", "-config.expand-env=true"]
+    environment:
+      <<: *s3-env
+      MIMIR_BLOCKS_BUCKET: ${MIMIR_BLOCKS_BUCKET:-mimir-blocks}
+      MIMIR_RULER_BUCKET: ${MIMIR_RULER_BUCKET:-mimir-ruler}
+    volumes:
+      - ./observability/mimir/mimir.yaml:/etc/mimir/mimir.yaml:ro
+      - mimir-data:/data
+    ports: ["9009:9009"]
+    depends_on:
+      minio-init:       { condition: service_completed_successfully }
+      init-permissions: { condition: service_completed_successfully }
+    networks: [shopease]
+    logging: *default-logging
+    mem_limit: 1g
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9009/ready | grep -q ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 20s
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: grafana
+    restart: unless-stopped
+    depends_on:
+      mimir:   { condition: service_healthy }
+      mailpit: { condition: service_started }
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      # consumed by grafana.ini ($__env{...}) and the alert provisioning files (${...})
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS:-grafana-alerts@shopease.com}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-ShopEase Alerts}
+      SMTP_STARTTLS_POLICY: ${SMTP_STARTTLS_POLICY:-MandatoryStartTLS}
+      SMTP_SKIP_VERIFY: ${SMTP_SKIP_VERIFY:-true}
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-shimdi247@gmail.com}
+      ALERT_CPU_THRESHOLD: ${ALERT_CPU_THRESHOLD:-40}
+      ALERT_MEM_THRESHOLD: ${ALERT_MEM_THRESHOLD:-40}
+    volumes:
+      - ./observability/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports: ["3001:3000"]
+    networks: [shopease]
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health | grep -q ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  # ═══════════════════ LOGS:  OTel Collector ─► Logstash ─► Elasticsearch ─► Kibana ═══════════════════
+  #                                              └─► S3 archive      (ES also snapshots to S3)
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION:-8.19.16}
+    container_name: elasticsearch
+    restart: unless-stopped
+    environment:
+      <<: *s3-env
+      ES_JAVA_OPTS: "-Xms768m -Xmx768m"
+    # The S3 credentials go into the Elasticsearch KEYSTORE (the only place ES reads secrets from),
+    # then we hand over to the stock entrypoint.
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        [ -f config/elasticsearch.keystore ] || bin/elasticsearch-keystore create
+        printf '%s' "$$S3_ACCESS_KEY" | bin/elasticsearch-keystore add -x -f s3.client.default.access_key
+        printf '%s' "$$S3_SECRET_KEY" | bin/elasticsearch-keystore add -x -f s3.client.default.secret_key
+        exec /bin/tini -- /usr/local/bin/docker-entrypoint.sh eswrapper
+    volumes:
+      - ./observability/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports: ["9200:9200"]
+    ulimits:
+      nofile: { soft: 65536, hard: 65536 }
+    depends_on:
+      minio-init: { condition: service_completed_successfully }
+    networks: [shopease]
+    logging: *default-logging
+    mem_limit: 1536m
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs 'http://127.0.0.1:9200/_cluster/health?wait_for_status=yellow&timeout=3s' >/dev/null"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 40s
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:${ELASTIC_VERSION:-8.19.16}
+    container_name: logstash
+    restart: unless-stopped
+    environment:
+      <<: *s3-env
+      LOGS_ARCHIVE_BUCKET: ${LOGS_ARCHIVE_BUCKET:-elk-logs-archive}
+      LS_JAVA_OPTS: "-Xms512m -Xmx512m"
+      # Settings are passed as env (the image maps them onto logstash.yml) — the entrypoint rewrites
+      # that file in place, so bind-mounting it read-only would break startup.
+      HTTP_HOST: 0.0.0.0
+      PIPELINE_WORKERS: "2"
+      PIPELINE_BATCH_SIZE: "250"
+      PIPELINE_ECS_COMPATIBILITY: v8
+      QUEUE_TYPE: persisted               # buffered logs survive a restart
+      QUEUE_MAX_BYTES: 512mb
+      XPACK_MONITORING_ENABLED: "false"
+      LOG_LEVEL: info
+    volumes:
+      - ./observability/logstash/pipelines.yml:/usr/share/logstash/config/pipelines.yml:ro
+      - ./observability/logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - logstash-data:/usr/share/logstash/data
+    depends_on:
+      elasticsearch: { condition: service_healthy }
+      minio-init:    { condition: service_completed_successfully }
+    networks: [shopease]
+    logging: *default-logging
+    mem_limit: 1g
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://127.0.0.1:9600/ >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ELASTIC_VERSION:-8.19.16}
+    container_name: kibana
+    restart: unless-stopped
+    volumes:
+      - ./observability/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+    ports: ["5601:5601"]
+    depends_on:
+      elasticsearch: { condition: service_healthy }
+    networks: [shopease]
+    logging: *default-logging
+    mem_limit: 1g
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://127.0.0.1:5601/api/status | grep -q '\"level\":\"available\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+
+  # one-shot: ILM + index template + S3 snapshot repo + SLM + Kibana data view / saved searches / dashboard
+  elk-setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION:-8.19.16}
+    container_name: elk-setup
+    restart: "no"
+    entrypoint: ["/bin/bash", "/setup/setup.sh"]
+    environment:
+      ES_URL: http://elasticsearch:9200
+      KIBANA_URL: http://kibana:5601
+      ES_SNAPSHOT_BUCKET: ${ES_SNAPSHOT_BUCKET:-es-snapshots}
+      LOG_RETENTION_DAYS: ${LOG_RETENTION_DAYS:-30}
+    volumes:
+      - ./observability/elasticsearch/setup.sh:/setup/setup.sh:ro
+      - ./observability/kibana/saved-objects.ndjson:/setup/saved-objects.ndjson:ro
+    depends_on:
+      elasticsearch: { condition: service_healthy }
+      kibana:        { condition: service_healthy }
+    networks: [shopease]
+    logging: *default-logging
+
+  # ═══════════════════════════════ SHARED TOOLING ═══════════════════════════════
+
+  # SMTP sink: application e-mails AND Grafana alert e-mails land here (swap via .env for real SMTP)
+  mailpit:
+    image: axllent/mailpit:v1.21
+    container_name: mailpit
+    restart: unless-stopped
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "8025:8025"   # web UI
+      - "1025:1025"   # SMTP
+    networks: [shopease]
+    logging: *default-logging
+
+  # ═══════════════════════════════ EXPORTERS (scraped by the collector) ═══════════════════════════════
+
+  cadvisor:                      # per-container CPU / memory / network / disk
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: cadvisor
+    restart: unless-stopped
+    privileged: true
+    devices: ["/dev/kmsg"]
+    command:
+      - --docker_only=true
+      - --housekeeping_interval=10s
+      - --store_container_labels=false
+      - --whitelisted_container_labels=com.docker.compose.service
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks: [shopease]
+    logging: *default-logging
+
+  node-exporter:                 # host (node) CPU / memory / disk / network
+    image: prom/node-exporter:v1.8.2
+    container_name: node-exporter
+    restart: unless-stopped
+    pid: host
+    command:
+      - --path.rootfs=/host
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    volumes: ["/:/host:ro"]
+    networks: [shopease]
+    logging: *default-logging
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: postgres-exporter
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      DATA_SOURCE_NAME: postgresql://exporter:${DB_EXPORTER_PASSWORD:-exporter_pw}@postgres:5432/shopease?sslmode=disable
+      PG_EXPORTER_EXTEND_QUERY_PATH: /etc/postgres-exporter/queries.yaml
+    volumes:
+      - ./observability/postgres-exporter/queries.yaml:/etc/postgres-exporter/queries.yaml:ro
+    networks: [shopease]
+    logging: *default-logging
+
+  blackbox-exporter:             # HTTP probes -> uptime / availability / external latency
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: blackbox-exporter
+    restart: unless-stopped
+    volumes:
+      - ./observability/blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    networks: [shopease]
+    logging: *default-logging
+
+volumes:
+  postgres-data:
+  minio-data:
+  mimir-data:
+  elasticsearch-data:
+  logstash-data:
+  grafana-data:
+
+networks:
+  shopease:
+    driver: bridge
