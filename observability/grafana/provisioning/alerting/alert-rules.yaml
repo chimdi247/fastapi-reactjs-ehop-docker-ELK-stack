@@ -54,7 +54,7 @@ groups:
               type: threshold
               expression: B
               conditions:
-                - evaluator: { type: gt, params: [${ALERT_CPU_THRESHOLD}] }
+                - evaluator: { type: gt, params: [40] }
 
       # ─────────────────────── Container memory > 40% ───────────────────────
       - uid: container-memory-high
@@ -95,7 +95,7 @@ groups:
               type: threshold
               expression: B
               conditions:
-                - evaluator: { type: gt, params: [${ALERT_MEM_THRESHOLD}] }
+                - evaluator: { type: gt, params: [40] }
 
       # ─────────────────────── Node (host) CPU > 40% ───────────────────────
       - uid: node-cpu-high
@@ -134,7 +134,7 @@ groups:
               type: threshold
               expression: B
               conditions:
-                - evaluator: { type: gt, params: [${ALERT_CPU_THRESHOLD}] }
+                - evaluator: { type: gt, params: [40] }
 
       # ─────────────────────── Node (host) memory > 40% ───────────────────────
       - uid: node-memory-high
@@ -173,4 +173,4 @@ groups:
               type: threshold
               expression: B
               conditions:
-                - evaluator: { type: gt, params: [${ALERT_MEM_THRESHOLD}] }
+                - evaluator: { type: gt, params: [40] }
